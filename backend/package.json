@@ -11,7 +11,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "test": "node --import tsx --env-file=.env --test src/modules/leads/meta-lead.webhook.test.ts",
+    "test": "node --import tsx --env-file=.env --test src/modules/leads/*.test.ts",
     "postinstall": "prisma generate"
   },
   "devDependencies": {
