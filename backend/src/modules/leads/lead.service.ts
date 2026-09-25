@@ -5,6 +5,7 @@ import { logger } from "../../lib/logger.js";
 import { prisma } from "../../lib/prisma.js";
 import type { LeadListQuery } from "./list-leads.schema.js";
 import type { MetaLeadWebhookInput } from "./meta-lead.schema.js";
+import type { UpdateLeadStatusInput } from "./update-lead-status.schema.js";
 
 type LeadListDb = Pick<PrismaClient, "$transaction" | "lead">;
 
@@ -104,6 +105,52 @@ export async function getLeadById(id: string, db: Pick<PrismaClient, "lead"> = p
     if (isDatabaseError(error)) {
       logger.error({ err: error }, "failed to load lead");
       throw new HttpError(500, "Unable to load lead");
+    }
+
+    throw error;
+  }
+}
+
+export async function updateLeadStatus(id: string, input: UpdateLeadStatusInput) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const lead = await tx.lead.findUnique({ where: { id } });
+
+      if (!lead) {
+        throw new NotFoundError("Lead not found");
+      }
+
+      if (lead.status === input.status) {
+        return lead;
+      }
+
+      const updated = await tx.lead.update({
+        where: { id },
+        data: { status: input.status },
+      });
+
+      await tx.activity.create({
+        data: {
+          leadId: id,
+          type: "STATUS_CHANGED",
+          description: `Status changed from ${lead.status} to ${input.status}`,
+          metadata: {
+            previousStatus: lead.status,
+            newStatus: input.status,
+          },
+        },
+      });
+
+      return updated;
+    });
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+
+    if (isDatabaseError(error)) {
+      logger.error({ err: error }, "failed to update lead status");
+      throw new HttpError(500, "Unable to update lead status");
     }
 
     throw error;

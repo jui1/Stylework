@@ -14,7 +14,16 @@ function isDatabaseError(error: unknown): boolean {
   );
 }
 
+function isInvalidJson(error: unknown): boolean {
+  return error instanceof SyntaxError && "body" in error;
+}
+
 export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
+  if (isInvalidJson(error)) {
+    response.status(400).json({ error: "Invalid JSON" });
+    return;
+  }
+
   if (error instanceof ZodError) {
     response.status(400).json({
       error: "Invalid payload",

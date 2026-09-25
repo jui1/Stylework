@@ -25,6 +25,7 @@ enum ActivityType {
   MEETING
   NOTE
   STATUS_CHANGE
+  STATUS_CHANGED
 
   @@map("activity_type")
 }

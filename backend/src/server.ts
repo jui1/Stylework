@@ -2,6 +2,7 @@ import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { logger } from "./lib/logger.js";
 import { prisma } from "./lib/prisma.js";
+import { shutdown } from "./lib/shutdown.js";
 
 const app = createApp();
 
@@ -13,20 +14,11 @@ async function start(): Promise<void> {
     logger.info({ port: env.PORT }, "API listening");
   });
 
-  const shutdown = (signal: string) => {
-    logger.info({ signal }, "shutting down");
-    server.close(() => {
-      void prisma.$disconnect().finally(() => {
-        process.exit(0);
-      });
-    });
-  };
-
   process.on("SIGINT", () => {
-    shutdown("SIGINT");
+    shutdown({ server, signal: "SIGINT" });
   });
   process.on("SIGTERM", () => {
-    shutdown("SIGTERM");
+    shutdown({ server, signal: "SIGTERM" });
   });
 }
 
