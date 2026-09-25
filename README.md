@@ -98,4 +98,8 @@ Nginx serves the frontend and proxies `/api` to the backend container.
 
 ## Database
 
-`backend/prisma/schema.prisma` configures the PostgreSQL datasource and does not define models yet. Add models in that file, then run `npm run db:migrate`.
+`backend/prisma/schema.prisma` defines `Lead` and `Activity`. Apply the migration after PostgreSQL is running:
+
+```bash
+npm run db:migrate
+```
