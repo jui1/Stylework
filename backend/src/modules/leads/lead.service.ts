@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import type { PrismaClient } from "@prisma/client";
-import { ConflictError, HttpError } from "../../errors/http-error.js";
+import { ConflictError, HttpError, NotFoundError } from "../../errors/http-error.js";
 import { logger } from "../../lib/logger.js";
 import { prisma } from "../../lib/prisma.js";
 import type { LeadListQuery } from "./list-leads.schema.js";
@@ -74,6 +74,36 @@ export async function listLeads(query: LeadListQuery, db: LeadListDb = prisma) {
     if (isDatabaseError(error)) {
       logger.error({ err: error }, "failed to list leads");
       throw new HttpError(500, "Unable to load leads");
+    }
+
+    throw error;
+  }
+}
+
+export async function getLeadById(id: string, db: Pick<PrismaClient, "lead"> = prisma) {
+  try {
+    const lead = await db.lead.findUnique({
+      where: { id },
+      include: {
+        activities: {
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
+
+    if (!lead) {
+      throw new NotFoundError("Lead not found");
+    }
+
+    return lead;
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+
+    if (isDatabaseError(error)) {
+      logger.error({ err: error }, "failed to load lead");
+      throw new HttpError(500, "Unable to load lead");
     }
 
     throw error;
