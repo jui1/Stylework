@@ -1,0 +1,26 @@
+{
+  "name": "stylework",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stylework Senior Full Stack Engineer assignment scaffold",
+  "packageManager": "npm@10.9.3",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
+    "dev:backend": "npm run dev -w backend",
+    "dev:frontend": "npm run dev -w frontend",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "npm run db:generate -w backend",
+    "db:migrate": "npm run db:migrate -w backend"
+  }
+}
