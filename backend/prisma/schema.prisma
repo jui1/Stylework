@@ -19,6 +19,7 @@ enum LeadStatus {
 }
 
 enum ActivityType {
+  LEAD_CREATED
   CALL
   EMAIL
   MEETING
