@@ -1,5 +1,5 @@
-import { HomePage } from "@/pages/HomePage";
+import { AppRoutes } from "@/app/routes";
 
 export function App() {
-  return <HomePage />;
+  return <AppRoutes />;
 }
