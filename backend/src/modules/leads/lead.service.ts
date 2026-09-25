@@ -5,6 +5,7 @@ import { logger } from "../../lib/logger.js";
 import { prisma } from "../../lib/prisma.js";
 import type { LeadListQuery } from "./list-leads.schema.js";
 import type { MetaLeadWebhookInput } from "./meta-lead.schema.js";
+import type { UpdateLeadInput } from "./update-lead.schema.js";
 import type { UpdateLeadStatusInput } from "./update-lead-status.schema.js";
 
 type LeadListDb = Pick<PrismaClient, "$transaction" | "lead">;
@@ -151,6 +152,67 @@ export async function updateLeadStatus(id: string, input: UpdateLeadStatusInput)
     if (isDatabaseError(error)) {
       logger.error({ err: error }, "failed to update lead status");
       throw new HttpError(500, "Unable to update lead status");
+    }
+
+    throw error;
+  }
+}
+
+export async function updateLead(id: string, input: UpdateLeadInput) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const lead = await tx.lead.findUnique({ where: { id } });
+
+      if (!lead) {
+        throw new NotFoundError("Lead not found");
+      }
+
+      const changes: Record<string, { previous: string | null; next: string | null }> = {};
+
+      if (input.name !== undefined && input.name !== lead.name) {
+        changes.name = { previous: lead.name, next: input.name };
+      }
+
+      if (input.email !== undefined && input.email !== lead.email) {
+        changes.email = { previous: lead.email, next: input.email };
+      }
+
+      if (input.phone !== undefined && input.phone !== lead.phone) {
+        changes.phone = { previous: lead.phone, next: input.phone };
+      }
+
+      if (Object.keys(changes).length === 0) {
+        return lead;
+      }
+
+      const updated = await tx.lead.update({
+        where: { id },
+        data: {
+          name: input.name,
+          email: input.email,
+          phone: input.phone,
+        },
+      });
+
+      await tx.activity.create({
+        data: {
+          leadId: id,
+          type: "LEAD_UPDATED",
+          description: "Lead details updated",
+          metadata: { changes },
+        },
+      });
+
+      return updated;
+    });
+  } catch (error) {
+    if (error instanceof HttpError) {
+      throw error;
+    }
+
+    if (isDatabaseError(error)) {
+      logger.error({ err: error }, "failed to update lead");
+      throw new HttpError(500, "Unable to update lead");
     }
 
     throw error;

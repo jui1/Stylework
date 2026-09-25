@@ -26,6 +26,7 @@ enum ActivityType {
   NOTE
   STATUS_CHANGE
   STATUS_CHANGED
+  LEAD_UPDATED
 
   @@map("activity_type")
 }
